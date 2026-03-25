@@ -59,32 +59,55 @@
     </script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Orbitron:wght@700;900&display=swap');
+    /* ปรับ Navbar ให้รองรับมือถือ */
+    .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: nowrap; /* ห้ามเมนูดีดลงมาซ้อนกัน */
+    }
 
-        :root {
-            /* 🎨 สีธีมใหม่ (Modern Neon Premium) */
-            --primary: #0ea5e9; 
-            --bg-dark: #020617; 
-            --bg-panel: #0f172a; 
-            --bg-card: #1e293b; 
-            --text-main: #f8fafc;
-            --danger: #f43f5e;
-            --success: #10b981;
-            
-            /* สีคงที่ */
-            --text-gray: #94a3b8;
-            --warning: #f59e0b;
-            --truemoney: #f97316;
-            --radius: 16px;
-            --shadow: 0 10px 40px rgba(0,0,0,0.5);
-            
-            /* สีกาชา */
-            --rare-legendary: #fbbf24;
-            --rare-epic: #a855f7;
-            --rare-rare: #38bdf8;
-            --rare-common: #cbd5e1;
-        }
+    /* ซ่อนเมนูเดิมในจอเล็ก แล้วเปลี่ยนเป็นเลื่อนขวาได้ */
+    .main-menu {
+        display: flex;
+        gap: 5px;
+        overflow-x: auto; /* ถ้าเมนูเยอะเกินไป ให้ใช้วิธีไถนิ้วเลื่อนข้างแทนการซ้อนทับ */
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding-bottom: 5px;
+    }
+    .main-menu::-webkit-scrollbar { display: none; }
 
+    /* ถ้าหน้าจอเล็กมากๆ (มือถือ) ให้จำกัดขนาด Logo เพื่อปันพื้นที่ให้เมนู */
+    @media (max-width: 600px) {
+        .logo { font-size: 18px; }
+        .server-ip { display: none; } /* ซ่อน IP ในมือถือเพื่อไม่ให้เบียดเมนู */
+        .main-menu a { font-size: 13px; padding: 8px 10px; }
+    }
+</style>
+
+<header>
+    <div class="nav-container">
+        <div class="logo" onclick="nav('home')">
+            <span id="logoPre">MC</span><span id="logoSuf" style="color:var(--primary);">Store</span>
+        </div>
+
+        <div class="main-menu" id="mainMenu" style="display: none;">
+            <a onclick="nav('home')" id="nav-home">🏠 หน้าแรก</a>
+            <a onclick="nav('shop')" id="nav-shop">🛍️ ร้านค้า</a>
+            <a onclick="nav('topup')" id="nav-topup">💎 เติมเงิน</a>
+            <a onclick="nav('gacha')" id="nav-gacha">🎲 เสี่ยงโชค</a>
+            <a onclick="nav('leaderboard')" id="nav-leaderboard">🏆 เศรษฐี</a>
+        </div>
+
+        <div class="user-menu">
+            <span id="walletDisplay" class="wallet">0 ฿</span>
+            <button id="adminBtn" style="display: none;" onclick="nav('admin')">⚙️</button>
+            <button id="logoutBtn" class="btn-danger" style="display: none;" onclick="logout()">🚪</button>
+            <button id="loginBtn" class="btn-success" onclick="nav('login')">เข้าสู่ระบบ</button>
+        </div>
+    </div>
+</header>
         * { 
             box-sizing: border-box; 
             margin: 0; 
