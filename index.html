@@ -102,8 +102,21 @@
             /* ถอด Animation ออกเพื่อความคลีนแบบคลาสสิก */
         }
 
-        /* ซ่อนดาวเพื่อไม่ให้ลายตาตามแบบเรฟเฟอเรนซ์ */
-        .stars-container { display: none; } 
+        /* เปิดใช้งานดาวแวววับกลับมา (แก้ไข DISPLAY: BLOCK) */
+        .stars-container { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1; pointer-events: none; overflow: hidden;
+            display: block; 
+        }
+        .star { 
+            position: absolute; background: #fff; border-radius: 50%; opacity: 0;
+            animation: twinkle linear infinite;
+        }
+        @keyframes twinkle { 
+            0% { opacity: 0; transform: translateY(0) scale(0.5); } 
+            50% { opacity: 0.8; transform: translateY(-30px) scale(1.2); } 
+            100% { opacity: 0; transform: translateY(-60px) scale(0.5); } 
+        }
 
         /* --- Navbar (เต็มกว้าง ไม่บีบกลาง) --- */
         header {
@@ -325,7 +338,7 @@
         .custom-file-upload.tm label:hover .upload-btn-mock { background: var(--truemoney); border-color: var(--truemoney); color: #fff;}
         .file-name { margin-top: 15px; font-size: 13px; color: var(--success); font-weight: bold; word-break: break-all; }
 
-        /* --- EPIC GACHA SYSTEM (Cleaned up) --- */
+        /* --- EPIC GACHA SYSTEM --- */
         .gacha-panel { 
             text-align: center; padding: 60px 20px; background: var(--bg-panel); 
             border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
@@ -405,7 +418,7 @@
         @keyframes spinRaysBurst { 0% { transform: translate(-50%, -50%) rotate(0deg) scale(0); opacity: 1; } 100% { transform: translate(-50%, -50%) rotate(180deg) scale(1.5); opacity: 0; } }
         @keyframes gachaExplode { 0% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0); opacity: 0; } }
         @keyframes textReveal { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1.2); opacity: 1; } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- Admin Section Strict Display --- */
         .admin-section { display: none; }
@@ -542,7 +555,7 @@
                 <h3 style="color: var(--truemoney); font-size:18px;">โอนเงินเข้า TrueMoney Wallet</h3>
                 <div class="desc-text" id="descWallet">คำอธิบายการโอนวอลเล็ท...</div>
                 
-                <img id="qrWalletDisplay" src="" style="width: 180px; height: 180px; border-radius: 8px; margin: 0 auto 20px; border: 2px solid rgba(255,255,255,0.1); background: #fff; display: none;">
+                <img id="qrWalletDisplay" src="" style="width: 180px; height: 180px; border-radius: 8px; margin: 0 auto 15px; display: none;">
 
                 <div class="pay-box-info tm" style="text-align:center; padding:15px;">
                     <div style="font-size: 13px; color: var(--text-gray);">เบอร์โทรศัพท์ทรูมันนี่</div>
@@ -573,6 +586,7 @@
                     <div style="font-size: 20px; font-weight: 700; color: var(--primary);" id="infoBankNo">-</div>
                     <div style="font-weight: 600; color: #fff; font-size:13px;" id="infoBankAccName">-</div>
                 </div>
+
                 <div class="custom-file-upload">
                     <input type="file" id="slipBank" accept="image/*" onchange="updateFileName(this, 'bankFileName')">
                     <label for="slipBank">
@@ -591,7 +605,7 @@
         <div class="panel" style="text-align:center; padding:50px 20px;">
             <h2 style="font-size: 32px;">สุ่มรางวัล (50 ฿)</h2>
             <p style="margin-bottom: 40px;">ลุ้นรับไอเทมระดับตำนาน หรือ เครดิตสูงสุด</p>
-            <div style="display:inline-block; background:rgba(0,0,0,0.3); padding:40px; border-radius:16px; border:1px solid rgba(255,255,255,0.05);">
+            <div style="display:inline-block; background:rgba(0,0,0,0.3); padding:40px; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
                 <img src="https://cdn-icons-png.flaticon.com/512/5100/5100913.png" id="gachaBox" style="width:150px; transition:0.3s; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));">
             </div>
             <p id="gachaResult" style="font-size: 20px; font-weight: bold; min-height: 30px; margin: 30px 0;"></p>
@@ -767,6 +781,20 @@
     <footer id="siteFooter">MCStore © 2026 - สงวนลิขสิทธิ์</footer>
 
     <script>
+        // Restored Star Animation Logic
+        const sc = document.getElementById('starsContainer');
+        for(let i=0; i<60; i++) { 
+            let star = document.createElement('div'); 
+            star.className = 'star'; 
+            star.style.width = (Math.random() * 3 + 1) + 'px'; 
+            star.style.height = star.style.width; 
+            star.style.left = Math.random() * 100 + 'vw'; 
+            star.style.top = Math.random() * 100 + 'vh'; 
+            star.style.animationDuration = (Math.random() * 4 + 2) + 's'; 
+            star.style.animationDelay = (Math.random() * 3) + 's'; 
+            sc.appendChild(star); 
+        }
+
         function updateFileName(input, targetId) { const target = document.getElementById(targetId); if (input.files && input.files.length > 0) target.innerText = "✓ เลือกไฟล์แล้ว"; else target.innerText = ""; }
         function toBase64(file) { return new Promise((resolve, reject) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); r.onerror = e => reject(e); }); }
 
@@ -784,7 +812,7 @@
             });
         }
 
-        function copyIP() { let ip = document.getElementById('serverIpDisplay').innerText.replace(' ', ''); navigator.clipboard.writeText(ip); uiDialog({title:"คัดลอก IP", text: `คัดลอกไอพีแล้ว นำไปเข้าเกมได้เลย!`}); }
+        function copyIP() { let ip = document.getElementById('serverIpDisplay').innerText.replace('▶', '').trim(); navigator.clipboard.writeText(ip); uiDialog({title:"คัดลอก IP", text: `คัดลอกไอพีแล้ว นำไปเข้าเกมได้เลย!`}); }
 
         let currentUser = sessionStorage.getItem('onlineUser'); let currentRole = 'user'; let cart = []; let activeShopCat = 'all';
         let allUsers = {}; let allProducts = []; let allCategories = []; let gachaPool = [];
@@ -802,7 +830,12 @@
                 if(document.getElementById('view-history').classList.contains('active')) renderHistory();
             });
             window.cloud.listenCol("products", (data) => { allProducts = data; renderShop(); loadAdmProds(); });
-            window.cloud.listenCol("categories", (data) => { allCategories = data; renderShopCats(); loadAdmCats(); });
+            window.cloud.listenCol("categories", (data) => { 
+                allCategories = data; 
+                renderShopCats(); 
+                loadAdmCats(); 
+                loadAdmProds(); // โหลดหมวดหมู่ใหม่เมื่อเพิ่มหมวดหมู่ให้แสดงในหน้าเพิ่มสินค้า
+            });
             window.cloud.listenCol("gacha", (data) => { gachaPool = data; loadAdmGacha(); });
             window.cloud.listenDoc("config", "settings", (data) => { if(data) applySettings(data); });
             window.cloud.listenDoc("config", "payment", (data) => { if(data) applyPaymentUI(data); });
@@ -813,8 +846,8 @@
             if (pageId === 'admin' && currentRole === 'user') return uiDialog({title:"ปฏิเสธ", text:"เฉพาะผู้ดูแลระบบ"});
             document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active')); 
             document.querySelectorAll('.main-menu a').forEach(a => a.classList.remove('active'));
-            document.getElementById('view-'+pageId).classList.add('active'); 
-            let nLink = document.getElementById('nav-'+pageId); if(nLink) nLink.classList.add('active');
+            document.getElementById('view-' + pageId).classList.add('active'); 
+            let nLink = document.getElementById('nav-' + pageId); if(nLink) nLink.classList.add('active');
             if(pageId === 'shop') renderShop(); if(pageId === 'cart') renderCart(); if(pageId === 'history') renderHistory(); if(pageId === 'leaderboard') renderLeaderboard();
             if(pageId === 'admin') { buildAdminMenu(); switchAdminTab('adm-users'); } 
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -933,82 +966,10 @@
             if(tabId === 'adm-gacha') loadAdmGacha(); 
         }
 
-        // ==========================================
-        // ส่วนจัดการระบบข้อมูลสมาชิกที่ได้รับการแก้ไขอย่างสมบูรณ์
-        // ==========================================
-        function loadAdmUsers() { 
-            let tb = document.getElementById('adminUserTable'); 
-            tb.innerHTML = ""; 
-            
-            for(let name in allUsers) { 
-                let u = allUsers[name]; 
-                let roleColor = u.role === 'owner' ? 'var(--warning)' : (u.role === 'admin' ? 'var(--primary)' : 'var(--text-gray)');
-                
-                // ปุ่มเพิ่ม และ ลดเงิน สำหรับ Admin & Owner
-                let mBtns = `
-                    <button class="btn-success" style="padding:4px 8px; font-size:11px;" onclick="admModMoney('${name}','add')">+ เพิ่ม</button>
-                    <button class="btn-danger" style="padding:4px 8px; font-size:11px; margin-left:5px;" onclick="admModMoney('${name}','sub')">- ลด</button>
-                `;
-                
-                // ปุ่มแบน/ปลดแบน 
-                let banBtn = u.banned ? 
-                    `<button class="btn-success" style="padding:4px 8px; font-size:11px; margin-left:5px;" onclick="admBanUser('${name}', false)">ปลดแบน</button>` : 
-                    `<button class="btn-danger" style="padding:4px 8px; font-size:11px; margin-left:5px;" onclick="admBanUser('${name}', true)">แบน</button>`;
-                
-                let tr = `
-                <tr>
-                    <td style="${u.banned ? 'text-decoration: line-through; color:var(--danger);' : ''} font-weight:600;">${name}</td>
-                    <td><span style="background:${roleColor}; padding:2px 8px; border-radius:4px; font-size:11px; color:#fff;">${u.role}</span></td>
-                    <td>${u.balance} ฿</td>
-                    <td>${u.totalTopup||0} ฿</td>
-                    <td><div style="display:flex; gap:5px;">${mBtns}</div></td>
-                `;
-                
-                // แสดงคอลัมน์จัดการยศ/แบน เฉพาะผู้ที่มีสิทธิ์ Owner
-                if(currentRole === 'owner') {
-                    let rBtns = "-";
-                    if(name !== currentUser) {
-                        if(u.role === 'user') rBtns = `<button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="admSetRole('${name}','admin')">ขึ้น Admin</button>`;
-                        if(u.role === 'admin') rBtns = `<button class="btn-warning" style="padding:4px 8px; font-size:11px; color:#000;" onclick="admSetRole('${name}','user')">ลดยศ</button>`;
-                    }
-                    tr += `<td><div style="display:flex; gap:5px; align-items:center;">${rBtns}${name!==currentUser ? banBtn : ''}</div></td>`;
-                }
-                
-                tb.innerHTML += tr + "</tr>"; 
-            } 
-        }
-
-        async function admModMoney(n, type) { 
-            let txt = type === 'add' ? `เพิ่มเงินให้ ${n}` : `หักลดเงินของ ${n}`;
-            let amt = await uiDialog({title: txt, text: "ใส่จำนวนเงิน (เฉพาะตัวเลข):", type: "prompt", inputType: "number", val: ""}); 
-            if(amt && !isNaN(amt)) { 
-                let amount = parseInt(amt);
-                let currentBal = allUsers[n].balance || 0;
-                let currentTopup = allUsers[n].totalTopup || 0;
-                
-                if(type === 'add') { 
-                    await window.cloud.save("users", n, { balance: currentBal + amount, totalTopup: currentTopup + amount });
-                } else { 
-                    await window.cloud.save("users", n, { balance: Math.max(0, currentBal - amount) });
-                }
-            } 
-        }
-
-        async function admSetRole(n, role) { 
-            if(await uiDialog({title:"จัดการยศ", text:`ยืนยันการตั้งยศ ${n} เป็น ${role}?`, type:"confirm"})){ 
-                await window.cloud.save("users", n, { role: role });
-            } 
-        }
-
-        async function admBanUser(n, banStatus) { 
-            if(n === currentUser) return uiDialog({title:"ผิดพลาด", text:"คุณไม่สามารถแบนไอดีตัวเองได้!"}); 
-            let txt = banStatus ? `ระงับบัญชี (แบน) ${n} ใช่หรือไม่?` : `ปลดแบนบัญชี ${n} ใช่หรือไม่?`; 
-            if(await uiDialog({title:"ยืนยันคำสั่ง", text: txt, type:"confirm"})){ 
-                await window.cloud.save("users", n, { banned: banStatus });
-            } 
-        }
-        // ==========================================
-
+        function loadAdmUsers() { let tb = document.getElementById('adminUserTable'); tb.innerHTML = ""; for(let name in allUsers) { let u = allUsers[name]; let tr = `<tr><td>${name}</td><td>${u.role}</td><td>${u.balance}</td><td>${u.totalTopup||0}</td><td><button class="btn-success" style="padding:4px 8px; font-size:11px;" onclick="admModMoney('${name}','add')">+ เพิ่ม</button></td>`; if(currentRole === 'owner') { tr += `<td><button class="btn-danger" style="padding:4px 8px; font-size:11px;" onclick="admSetRole('${name}','admin')">ยศ</button></td>`; } tb.innerHTML += tr + "</tr>"; } }
+        async function admModMoney(n, type) { let amt = await uiDialog({title: "ให้เงิน", text: "จำนวน:", type: "prompt", inputType: "number", val: ""}); if(amt && !isNaN(amt)) { let amount = parseInt(amt); await window.cloud.save("users", n, { balance: (allUsers[n].balance||0) + amount, totalTopup: (allUsers[n].totalTopup||0) + amount }); } }
+        async function admSetRole(n, role) { await window.cloud.save("users", n, { role: role }); }
+        
         function loadAdmCats() { let tb = document.getElementById('adminCatTable'); tb.innerHTML = ""; allCategories.forEach(c => { tb.innerHTML += `<tr><td>${c.name}</td><td><button class="btn-danger" style="padding:4px 8px;" onclick="admDelCat('${c.id}')">ลบ</button></td></tr>`; }); }
         async function addCategory() { let v = document.getElementById('addCatName').value; if(v) { await window.cloud.save("categories", Date.now().toString(), { name: v }); document.getElementById('addCatName').value=""; } }
         async function admDelCat(id) { await window.cloud.del("categories", id); }
