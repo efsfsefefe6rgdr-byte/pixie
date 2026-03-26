@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="siteTitle">MC Store Online</title>
+    <title id="siteTitle">MC Store</title>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -99,11 +99,32 @@
             flex-direction: column;
             overflow-x: hidden;
             background-color: var(--bg-dark);
-            /* ถอด Animation ออกเพื่อความคลีนแบบคลาสสิก */
         }
 
-        /* ซ่อนดาวเพื่อไม่ให้ลายตาตามแบบเรฟเฟอเรนซ์ */
-        .stars-container { display: none; } 
+        /* เปิดดาวแวววับกลับมาให้ทำงานตามปกติ */
+        .stars-container { 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100vw; height: 100vh; 
+            z-index: -1; 
+            pointer-events: none; 
+            overflow: hidden; 
+            display: block; 
+        }
+        
+        .star { 
+            position: absolute; 
+            background: #fff; 
+            border-radius: 50%; 
+            opacity: 0; 
+            animation: twinkle linear infinite; 
+        }
+        
+        @keyframes twinkle { 
+            0% { opacity: 0; transform: translateY(0) scale(0.5); } 
+            50% { opacity: 0.8; transform: translateY(-30px) scale(1.2); } 
+            100% { opacity: 0; transform: translateY(-60px) scale(0.5); } 
+        }
 
         /* --- Navbar (เต็มกว้าง ไม่บีบกลาง) --- */
         header {
@@ -405,7 +426,7 @@
         @keyframes spinRaysBurst { 0% { transform: translate(-50%, -50%) rotate(0deg) scale(0); opacity: 1; } 100% { transform: translate(-50%, -50%) rotate(180deg) scale(1.5); opacity: 0; } }
         @keyframes gachaExplode { 0% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0); opacity: 0; } }
         @keyframes textReveal { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1.2); opacity: 1; } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- Admin Section Strict Display --- */
         .admin-section { display: none; }
@@ -555,7 +576,7 @@
                     <label for="slipWallet">
                         <div style="font-size:24px; margin-bottom:10px;">📸</div>
                         <div style="font-size:14px; margin-bottom:10px;">แนบสลิปการโอนเงิน (JPG, PNG)</div>
-                        <div class="btn-panel" style="display:inline-block; padding:6px 12px; font-size:12px;">เลือกไฟล์</div>
+                        <div class="btn-panel" style="display:inline-block; padding:6px 12px; font-size:12px;">เลือกไฟล์ภาพ</div>
                         <div id="walletFileName" style="margin-top:10px; font-size:12px; color:var(--success);"></div>
                     </label>
                 </div>
@@ -578,7 +599,7 @@
                     <label for="slipBank">
                         <div style="font-size:24px; margin-bottom:10px;">📸</div>
                         <div style="font-size:14px; margin-bottom:10px;">แนบสลิปการโอนเงิน (JPG, PNG)</div>
-                        <div class="btn-panel" style="display:inline-block; padding:6px 12px; font-size:12px;">เลือกไฟล์</div>
+                        <div class="btn-panel" style="display:inline-block; padding:6px 12px; font-size:12px;">เลือกไฟล์ภาพ</div>
                         <div id="bankFileName" style="margin-top:10px; font-size:12px; color:var(--success);"></div>
                     </label>
                 </div>
@@ -767,8 +788,39 @@
     <footer id="siteFooter">MCStore © 2026 - สงวนลิขสิทธิ์</footer>
 
     <script>
+        // --- 1. System Functions & Firebase Auto Resize ---
         function updateFileName(input, targetId) { const target = document.getElementById(targetId); if (input.files && input.files.length > 0) target.innerText = "✓ เลือกไฟล์แล้ว"; else target.innerText = ""; }
-        function toBase64(file) { return new Promise((resolve, reject) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); r.onerror = e => reject(e); }); }
+        
+        // 🛠️ Auto-Resize Base64: แก้ปัญหาเพิ่มรูปแล้วหาย (แก้บัค Firebase 1MB Limit)
+        function toBase64(file) { 
+            return new Promise((resolve, reject) => { 
+                const reader = new FileReader(); 
+                reader.readAsDataURL(file); 
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_SIZE = 600; // บีบอัดขนาดไม่ให้เกินลิมิต Firestore
+                        if (width > height && width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
+                        } else if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.8)); // แปลงเป็น JPG เพื่อลดขนาดไฟล์
+                    };
+                }; 
+                reader.onerror = error => reject(error); 
+            }); 
+        }
 
         function uiDialog({ title, text, type = 'alert', inputType = 'text', val = '' }) {
             return new Promise((resolve) => {
@@ -784,7 +836,7 @@
             });
         }
 
-        function copyIP() { let ip = document.getElementById('serverIpDisplay').innerText.replace(' ', ''); navigator.clipboard.writeText(ip); uiDialog({title:"คัดลอก IP", text: `คัดลอกไอพีแล้ว นำไปเข้าเกมได้เลย!`}); }
+        function copyIP() { let ip = document.getElementById('serverIpDisplay').innerText.replace('▶', '').trim(); navigator.clipboard.writeText(ip); uiDialog({title:"คัดลอก IP", text: `คัดลอกไอพีแล้ว นำไปเข้าเกมได้เลย!`}); }
 
         let currentUser = sessionStorage.getItem('onlineUser'); let currentRole = 'user'; let cart = []; let activeShopCat = 'all';
         let allUsers = {}; let allProducts = []; let allCategories = []; let gachaPool = [];
@@ -802,7 +854,7 @@
                 if(document.getElementById('view-history').classList.contains('active')) renderHistory();
             });
             window.cloud.listenCol("products", (data) => { allProducts = data; renderShop(); loadAdmProds(); });
-            window.cloud.listenCol("categories", (data) => { allCategories = data; renderShopCats(); loadAdmCats(); });
+            window.cloud.listenCol("categories", (data) => { allCategories = data; renderShopCats(); loadAdmCats(); loadAdmProds(); });
             window.cloud.listenCol("gacha", (data) => { gachaPool = data; loadAdmGacha(); });
             window.cloud.listenDoc("config", "settings", (data) => { if(data) applySettings(data); });
             window.cloud.listenDoc("config", "payment", (data) => { if(data) applyPaymentUI(data); });
@@ -933,82 +985,10 @@
             if(tabId === 'adm-gacha') loadAdmGacha(); 
         }
 
-        // ==========================================
-        // ส่วนจัดการระบบข้อมูลสมาชิกที่ได้รับการแก้ไขอย่างสมบูรณ์
-        // ==========================================
-        function loadAdmUsers() { 
-            let tb = document.getElementById('adminUserTable'); 
-            tb.innerHTML = ""; 
-            
-            for(let name in allUsers) { 
-                let u = allUsers[name]; 
-                let roleColor = u.role === 'owner' ? 'var(--warning)' : (u.role === 'admin' ? 'var(--primary)' : 'var(--text-gray)');
-                
-                // ปุ่มเพิ่ม และ ลดเงิน สำหรับ Admin & Owner
-                let mBtns = `
-                    <button class="btn-success" style="padding:4px 8px; font-size:11px;" onclick="admModMoney('${name}','add')">+ เพิ่ม</button>
-                    <button class="btn-danger" style="padding:4px 8px; font-size:11px; margin-left:5px;" onclick="admModMoney('${name}','sub')">- ลด</button>
-                `;
-                
-                // ปุ่มแบน/ปลดแบน 
-                let banBtn = u.banned ? 
-                    `<button class="btn-success" style="padding:4px 8px; font-size:11px; margin-left:5px;" onclick="admBanUser('${name}', false)">ปลดแบน</button>` : 
-                    `<button class="btn-danger" style="padding:4px 8px; font-size:11px; margin-left:5px;" onclick="admBanUser('${name}', true)">แบน</button>`;
-                
-                let tr = `
-                <tr>
-                    <td style="${u.banned ? 'text-decoration: line-through; color:var(--danger);' : ''} font-weight:600;">${name}</td>
-                    <td><span style="background:${roleColor}; padding:2px 8px; border-radius:4px; font-size:11px; color:#fff;">${u.role}</span></td>
-                    <td>${u.balance} ฿</td>
-                    <td>${u.totalTopup||0} ฿</td>
-                    <td><div style="display:flex; gap:5px;">${mBtns}</div></td>
-                `;
-                
-                // แสดงคอลัมน์จัดการยศ/แบน เฉพาะผู้ที่มีสิทธิ์ Owner
-                if(currentRole === 'owner') {
-                    let rBtns = "-";
-                    if(name !== currentUser) {
-                        if(u.role === 'user') rBtns = `<button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="admSetRole('${name}','admin')">ขึ้น Admin</button>`;
-                        if(u.role === 'admin') rBtns = `<button class="btn-warning" style="padding:4px 8px; font-size:11px; color:#000;" onclick="admSetRole('${name}','user')">ลดยศ</button>`;
-                    }
-                    tr += `<td><div style="display:flex; gap:5px; align-items:center;">${rBtns}${name!==currentUser ? banBtn : ''}</div></td>`;
-                }
-                
-                tb.innerHTML += tr + "</tr>"; 
-            } 
-        }
-
-        async function admModMoney(n, type) { 
-            let txt = type === 'add' ? `เพิ่มเงินให้ ${n}` : `หักลดเงินของ ${n}`;
-            let amt = await uiDialog({title: txt, text: "ใส่จำนวนเงิน (เฉพาะตัวเลข):", type: "prompt", inputType: "number", val: ""}); 
-            if(amt && !isNaN(amt)) { 
-                let amount = parseInt(amt);
-                let currentBal = allUsers[n].balance || 0;
-                let currentTopup = allUsers[n].totalTopup || 0;
-                
-                if(type === 'add') { 
-                    await window.cloud.save("users", n, { balance: currentBal + amount, totalTopup: currentTopup + amount });
-                } else { 
-                    await window.cloud.save("users", n, { balance: Math.max(0, currentBal - amount) });
-                }
-            } 
-        }
-
-        async function admSetRole(n, role) { 
-            if(await uiDialog({title:"จัดการยศ", text:`ยืนยันการตั้งยศ ${n} เป็น ${role}?`, type:"confirm"})){ 
-                await window.cloud.save("users", n, { role: role });
-            } 
-        }
-
-        async function admBanUser(n, banStatus) { 
-            if(n === currentUser) return uiDialog({title:"ผิดพลาด", text:"คุณไม่สามารถแบนไอดีตัวเองได้!"}); 
-            let txt = banStatus ? `ระงับบัญชี (แบน) ${n} ใช่หรือไม่?` : `ปลดแบนบัญชี ${n} ใช่หรือไม่?`; 
-            if(await uiDialog({title:"ยืนยันคำสั่ง", text: txt, type:"confirm"})){ 
-                await window.cloud.save("users", n, { banned: banStatus });
-            } 
-        }
-        // ==========================================
-
+        function loadAdmUsers() { let tb = document.getElementById('adminUserTable'); tb.innerHTML = ""; for(let name in allUsers) { let u = allUsers[name]; let tr = `<tr><td>${name}</td><td>${u.role}</td><td>${u.balance}</td><td>${u.totalTopup||0}</td><td><button class="btn-success" style="padding:4px 8px; font-size:11px;" onclick="admModMoney('${name}','add')">+ เพิ่ม</button></td>`; if(currentRole === 'owner') { tr += `<td><button class="btn-danger" style="padding:4px 8px; font-size:11px;" onclick="admSetRole('${name}','admin')">ยศ</button></td>`; } tb.innerHTML += tr + "</tr>"; } }
+        async function admModMoney(n, type) { let amt = await uiDialog({title: "ให้เงิน", text: "จำนวน:", type: "prompt", inputType: "number", val: ""}); if(amt && !isNaN(amt)) { let amount = parseInt(amt); await window.cloud.save("users", n, { balance: (allUsers[n].balance||0) + amount, totalTopup: (allUsers[n].totalTopup||0) + amount }); } }
+        async function admSetRole(n, role) { await window.cloud.save("users", n, { role: role }); }
+        
         function loadAdmCats() { let tb = document.getElementById('adminCatTable'); tb.innerHTML = ""; allCategories.forEach(c => { tb.innerHTML += `<tr><td>${c.name}</td><td><button class="btn-danger" style="padding:4px 8px;" onclick="admDelCat('${c.id}')">ลบ</button></td></tr>`; }); }
         async function addCategory() { let v = document.getElementById('addCatName').value; if(v) { await window.cloud.save("categories", Date.now().toString(), { name: v }); document.getElementById('addCatName').value=""; } }
         async function admDelCat(id) { await window.cloud.del("categories", id); }
@@ -1049,7 +1029,7 @@
         async function savePaymentSettings() { let p = { wallet: document.getElementById('setPayWallet').value, walletName: document.getElementById('setPayWalletName').value, bankName: document.getElementById('setPayBankName').value, accName: document.getElementById('setPayAccName').value, accNo: document.getElementById('setPayAccNo').value, descVoucher: document.getElementById('setDescVoucher').value, descWallet: document.getElementById('setDescWallet').value, descBank: document.getElementById('setDescBank').value }; let fileTm = document.getElementById('setQrWalletImg'); if(fileTm.files.length > 0) { try { p.qrWalletImg = await toBase64(fileTm.files[0]); } catch(e){} } let fileBnk = document.getElementById('setQrImg'); if(fileBnk.files.length > 0) { try { p.qrImg = await toBase64(fileBnk.files[0]); } catch(e){} } await window.cloud.save("config", "payment", p); uiDialog({title:"สำเร็จ", text:"อัปเดตแล้ว"}); }
         async function saveSettings() { let s = { theme: document.getElementById('setThemeColor').value, bgDark: document.getElementById('setThemeBgDark').value, bgPanel: document.getElementById('setThemeBgPanel').value, bgCard: document.getElementById('setThemeBgCard').value, pre: document.getElementById('setPre').value, suf: document.getElementById('setSuf').value, serverIp: document.getElementById('setServerIp').value, welcomeTitle: document.getElementById('setWelcomeTitle').value, welcomeDesc: document.getElementById('setWelcomeDesc').value, footerText: document.getElementById('setFooterText').value }; let f1 = document.getElementById('setBannerImg'); if(f1.files.length > 0) { try { s.bannerImg = await toBase64(f1.files[0]); } catch(e){} } let f2 = document.getElementById('setLogoImg'); if(f2.files.length > 0) { try { s.logoImg = await toBase64(f2.files[0]); } catch(e){} } await window.cloud.save("config", "settings", s); uiDialog({title:"สำเร็จ", text:"อัปเดตหน้าเว็บแล้ว"}); }
         
-        function applySettings(s) { document.documentElement.style.setProperty('--primary', s.theme || '#007bff'); document.documentElement.style.setProperty('--bg-dark', s.bgDark || '#020b17'); document.documentElement.style.setProperty('--bg-panel', s.bgPanel || '#071529'); document.documentElement.style.setProperty('--bg-card', s.bgCard || '#0d1f3b'); document.getElementById('logoPre').innerText = s.pre || 'MC'; document.getElementById('logoSuf').innerText = s.suf || 'Store'; document.getElementById('serverIpDisplay').innerHTML = `<span style="display:inline-block; width:8px; height:8px; background:var(--primary); border-radius:50%;"></span> ` + (s.serverIp || 'MC-SERVER.NET'); document.getElementById('welcomeTitle').innerText = s.welcomeTitle || 'ยินดีต้อนรับ'; document.getElementById('welcomeDesc').innerText = s.welcomeDesc || 'ศูนย์รวมไอเทมชั้นยอด'; document.getElementById('siteFooter').innerText = s.footerText || "MCStore © 2026"; if(s.bannerImg) document.getElementById('homeBanner').src = s.bannerImg; if(s.logoImg) { document.getElementById('navLogoImg').src = s.logoImg; document.getElementById('navLogoImg').style.display = 'block'; } else { document.getElementById('navLogoImg').style.display = 'none'; } if(document.getElementById('setThemeColor')) { document.getElementById('setThemeColor').value = s.theme || '#007bff'; document.getElementById('setThemeBgDark').value = s.bgDark || '#020b17'; document.getElementById('setThemeBgPanel').value = s.bgPanel || '#071529'; document.getElementById('setThemeBgCard').value = s.bgCard || '#0d1f3b'; document.getElementById('setPre').value = s.pre || 'MC'; document.getElementById('setSuf').value = s.suf || 'Store'; document.getElementById('setServerIp').value = s.serverIp || 'MC-SERVER.NET'; document.getElementById('setWelcomeTitle').value = s.welcomeTitle || 'ยินดีต้อนรับ'; document.getElementById('setWelcomeDesc').value = s.welcomeDesc || 'ศูนย์รวมไอเทมชั้นยอด'; document.getElementById('setFooterText').value = s.footerText || 'MCStore © 2026'; } }
+        function applySettings(s) { document.documentElement.style.setProperty('--primary', s.theme || '#007bff'); document.documentElement.style.setProperty('--bg-dark', s.bgDark || '#030b17'); document.documentElement.style.setProperty('--bg-panel', s.bgPanel || '#071529'); document.documentElement.style.setProperty('--bg-card', s.bgCard || '#0d1f3b'); document.getElementById('logoPre').innerText = s.pre || 'MC'; document.getElementById('logoSuf').innerText = s.suf || 'Store'; document.getElementById('serverIpDisplay').innerHTML = `<span style="display:inline-block; width:8px; height:8px; background:var(--primary); border-radius:50%;"></span> ` + (s.serverIp || 'MC-SERVER.NET'); document.getElementById('welcomeTitle').innerText = s.welcomeTitle || 'ยินดีต้อนรับ'; document.getElementById('welcomeDesc').innerText = s.welcomeDesc || 'ศูนย์รวมไอเทมชั้นยอด'; document.getElementById('siteFooter').innerText = s.footerText || "MCStore © 2026"; if(s.bannerImg) document.getElementById('homeBanner').src = s.bannerImg; if(s.logoImg) { document.getElementById('navLogoImg').src = s.logoImg; document.getElementById('navLogoImg').style.display = 'block'; } else { document.getElementById('navLogoImg').style.display = 'none'; } if(document.getElementById('setThemeColor')) { document.getElementById('setThemeColor').value = s.theme || '#007bff'; document.getElementById('setThemeBgDark').value = s.bgDark || '#020b17'; document.getElementById('setThemeBgPanel').value = s.bgPanel || '#071529'; document.getElementById('setThemeBgCard').value = s.bgCard || '#0d1f3b'; document.getElementById('setPre').value = s.pre || 'MC'; document.getElementById('setSuf').value = s.suf || 'Store'; document.getElementById('setServerIp').value = s.serverIp || 'MC-SERVER.NET'; document.getElementById('setWelcomeTitle').value = s.welcomeTitle || 'ยินดีต้อนรับ'; document.getElementById('setWelcomeDesc').value = s.welcomeDesc || 'ศูนย์รวมไอเทมชั้นยอด'; document.getElementById('setFooterText').value = s.footerText || 'MCStore © 2026'; } }
 
         nav(currentUser ? 'home' : 'login');
     </script>
